@@ -16,6 +16,26 @@ class Lodynet : MainAPI() {
     override val hasMainPage = true
     override val supportedTypes = setOf(TvType.TvSeries, TvType.Movie)
 
+    private fun Element.toSearchResponse(duplicateTitles: MutableSet<String>): SearchResponse? {
+        val url = select("a").attr("href")
+        val title = cleanTitle(select(".SliderItemDescription h2").text().replace("((حلقة|الحلقة)\\s*(\\d+))|(والاخيرة|والأخيرة|الاخيرة|الأخيرة)".toRegex(), "").trim())
+        val posterUrl = select("img").attr("src")
+
+        if (duplicateTitles.contains(title)) {
+            return null
+        }
+        duplicateTitles.add(title)
+        return MovieSearchResponse(
+            title,
+            url,
+            name,
+            null,
+            posterUrl,
+            null,
+            null
+        )
+    }
+
     override val mainPage = mainPageOf(
         "$mainUrl/category/%D8%A7%D9%81%D9%84%D8%A7%D9%85-%D9%87%D9%86%D8%AF%D9%8A%D8%A9/page/" to "Indian Movies",
         "$mainUrl/category/%D8%A7%D9%81%D9%84%D8%A7%D9%85-%D8%A7%D8%B3%D9%8A%D9%88%D9%8A%D8%A9-a/page/" to "Asia Movies",
@@ -122,26 +142,6 @@ class Lodynet : MainAPI() {
                 addActors(actors)
             }
         }
-    }
-
-    private fun Element.toSearchResponse(duplicateTitles: MutableSet<String>): SearchResponse? {
-        val url = select("a").attr("href")
-        val title = cleanTitle(select(".SliderItemDescription h2").text().replace("((حلقة|الحلقة)\\s*(\\d+))|(والاخيرة|والأخيرة|الاخيرة|الأخيرة)".toRegex(), "").trim())
-        val posterUrl = select("img").attr("src")
-
-        if (duplicateTitles.contains(title)) {
-            return null
-        }
-        duplicateTitles.add(title)
-        return MovieSearchResponse(
-            title,
-            url,
-            name,
-            null,
-            posterUrl,
-            null,
-            null
-        )
     }
 
     override suspend fun loadLinks(
