@@ -1,8 +1,17 @@
 package eu.kanade.tachiyomi.lib.themes.flixscans
 
+import android.app.Application
+import android.content.SharedPreferences
 import android.util.Log
+import android.widget.Toast
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.lib.randomua.addRandomUAPreferenceToScreen
+import eu.kanade.tachiyomi.lib.randomua.getPrefCustomUA
+import eu.kanade.tachiyomi.lib.randomua.getPrefUAType
+import eu.kanade.tachiyomi.lib.randomua.setRandomUserAgent
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -16,34 +25,46 @@ import kotlinx.serialization.json.Json
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.util.concurrent.TimeUnit
 
 abstract class FlixScans(
     override val name: String,
-    override val baseUrl: String,
+    val defaultBaseUrl: String,
     override val lang: String,
-    protected val apiUrl: String = "$baseUrl/api/__api_party/noxApi",
-    protected val cdnUrl: String = baseUrl.replace("://", "://media.").plus("/"),
-) : HttpSource() {
+    protected val apiUrl: String = "$defaultBaseUrl/api/__api_party/noxApi",
+    protected val cdnUrl: String = defaultBaseUrl.replace("://", "://media.").plus("/"),
+) : HttpSource(), ConfigurableSource {
+    override val baseUrl by lazy { getPrefBaseUrl() }
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+    override val client: OkHttpClient by lazy {
+        network.cloudflareClient.newBuilder()
+            .setRandomUserAgent(
+                preferences.getPrefUAType(),
+                preferences.getPrefCustomUA(),
+            )
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
 
     override val supportsLatest = true
 
     protected open val json: Json by injectLazy()
 
-    override val client = network.cloudflareClient.newBuilder()
-        .rateLimit(2)
-        .build()
-
-    override fun headersBuilder() = super.headersBuilder()
-        .add("Referer", baseUrl)
+    override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
     protected open fun postPath(path: String): Request {
         val payload = """{"path":"$path","headers":{}}""".toRequestBody(JSON_MEDIA_TYPE)
-
         return POST(apiUrl, headers, payload)
     }
 
@@ -269,10 +290,30 @@ abstract class FlixScans(
 
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException()
 
-    protected inline fun <reified T> Response.parseAs(): T =
-        use { body.string() }.let(json::decodeFromString)
+    protected inline fun <reified T> Response.parseAs(): T = use { body.string() }.let(json::decodeFromString)
 
     companion object {
         private val JSON_MEDIA_TYPE = "application/json".toMediaTypeOrNull()
     }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val baseUrlPref = androidx.preference.EditTextPreference(screen.context).apply {
+            key = defaultBaseUrl
+            title = "Override BaseUrl"
+            summary = "For temporary uses. Updating the extension will erase this setting."
+            setDefaultValue(defaultBaseUrl)
+            dialogTitle = "Override BaseUrl"
+            dialogMessage = "Default: $defaultBaseUrl"
+
+            setOnPreferenceChangeListener { _, _ ->
+                Toast.makeText(screen.context, "Restart Tachiyomi to apply new setting.", Toast.LENGTH_LONG).show()
+                true
+            }
+        }
+        screen.addPreference(baseUrlPref)
+
+        addRandomUAPreferenceToScreen(screen)
+    }
+
+    private fun getPrefBaseUrl(): String = preferences.getString(defaultBaseUrl, defaultBaseUrl)!!
 }
