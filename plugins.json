@@ -1,0 +1,40 @@
+[
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=lodynet.link&sz=%size%",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/AhmadWebDev1/Cloudstream-Repository/",
+        "fileSize": 13666,
+        "status": 1,
+        "language": "ar",
+        "authors": [
+            "Ahmad"
+        ],
+        "tvTypes": [
+            "TvSeries",
+            "Movie"
+        ],
+        "version": 1.1,
+        "internalName": "LodynetProvider",
+        "url": "https://github.com/AhmadWebDev1/Cloudstream-Repository/raw/builds/LodynetProvider.cs3",
+        "name": "LodynetProvider"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=movie4u.watch&sz=%size%",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/AhmadWebDev1/Cloudstream-Repository/",
+        "fileSize": 12288,
+        "status": 1,
+        "language": "ar",
+        "authors": [
+            "Ahmad"
+        ],
+        "tvTypes": [
+            "TvSeries",
+            "Movie"
+        ],
+        "version": 1.2,
+        "internalName": "Movs4uProvider",
+        "url": "https://github.com/AhmadWebDev1/Cloudstream-Repository/raw/builds/Movs4uProvider.cs3",
+        "name": "Movs4uProvider"
+    }
+]
