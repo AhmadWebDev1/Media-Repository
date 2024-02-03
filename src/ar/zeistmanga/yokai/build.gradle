@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'Yokai'
+    pkgNameSuffix = 'ar.yokai'
+    extClass = '.Yokai'
+    extVersionCode = 10
+}
+
+dependencies {
+    implementation(project(":lib-themes"))
+}
+
+apply from: "$rootDir/common.gradle"
