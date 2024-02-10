@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.ar.vexmanga
+package eu.kanade.tachiyomi.extension.ar.thunderscans
 
 import eu.kanade.tachiyomi.lib.themes.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.source.model.SManga

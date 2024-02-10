@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.ar.areamanga
+package eu.kanade.tachiyomi.extension.ar.mangaflame
 
 import eu.kanade.tachiyomi.lib.themes.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.source.model.SManga
