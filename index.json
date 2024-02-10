@@ -1,19 +1,18 @@
 [
-    {
+  {
     "name": "Tachiyomi: Area Manga",
     "pkg": "eu.kanade.tachiyomi.extension.ar.areamanga",
-    "apk": "tachiyomi-ar.areamanga-v1.4.10.apk",
+    "apk": "tachiyomi-ar.areamanga-v1.4.28.apk",
     "lang": "ar",
     "code": 10,
     "version": "1.4.10",
     "nsfw": 0,
     "sources": [
       {
-        "name": "Area Manga",
+        "name": "أريا مانجا",
         "lang": "ar",
-        "id": "8740924557981884789",
-        "baseUrl": "https://www.areascans.net",
-        "versionId": 1
+        "id": "8112280317896333809",
+        "baseUrl": "https://www.areascans.net"
       }
     ]
   },
