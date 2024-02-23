@@ -1,0 +1,9 @@
+ext {
+    extName = 'Ares Manga'
+    extClass = '.AresManga'
+    themePkg = 'mangathemesia'
+    baseUrl = 'https://fl-ares.com'
+    overrideVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"
