@@ -8,7 +8,7 @@ class KingofShojo : MangaThemesia(
     "King of Shojo",
     "https://kingofshojo.com",
     "ar",
-    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("ar"))
+    dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("ar")),
 ) {
     override val hasProjectPage = true
 }

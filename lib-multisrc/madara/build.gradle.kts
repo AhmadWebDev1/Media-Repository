@@ -7,4 +7,5 @@ baseVersionCode = 35
 dependencies {
     api(project(":lib:cryptoaes"))
     api(project(":lib:i18n"))
+    api(project(":lib:randomua"))
 }

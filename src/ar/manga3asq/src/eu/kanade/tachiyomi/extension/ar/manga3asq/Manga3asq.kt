@@ -13,4 +13,3 @@ class Manga3asq : Madara(
     override val useNewChapterEndpoint: Boolean = true
     override val popularMangaUrlSelector = "div.post-title a:not([target])"
 }
-

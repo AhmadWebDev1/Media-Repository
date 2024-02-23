@@ -3,7 +3,7 @@ ext {
     extClass = '.VexManga'
     themePkg = 'mangathemesia'
     baseUrl = 'https://vexmanga.com'
-    overrideVersionCode = 3
+    overrideVersionCode = 1
 }
 
 apply from: "$rootDir/common.gradle"

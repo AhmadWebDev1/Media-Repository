@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.extension.ar.potatomanga
 
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
 import eu.kanade.tachiyomi.source.model.SManga
-import okhttp3.Request
 import java.text.SimpleDateFormat
 import java.util.Locale
 

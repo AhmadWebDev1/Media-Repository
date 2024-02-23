@@ -73,4 +73,3 @@ class VexManga : MangaThemesia(
         return scriptPages
     }
 }
-

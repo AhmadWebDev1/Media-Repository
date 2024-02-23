@@ -3,3 +3,7 @@ plugins {
 }
 
 baseVersionCode = 8
+
+dependencies {
+    api(project(":lib:randomua"))
+}

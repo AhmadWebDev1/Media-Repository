@@ -9,5 +9,5 @@ class Gatemanga : Madara(
     "https://gatemanga.com",
     "ar",
     "ar",
-    dateFormat = SimpleDateFormat("d MMMM، yyyy", Locale("ar")),
+    dateFormat = SimpleDateFormat("MMMM dd، yyyy", Locale("ar")),
 )

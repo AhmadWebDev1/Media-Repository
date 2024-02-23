@@ -1,6 +1,15 @@
 package eu.kanade.tachiyomi.multisrc.zeistmanga
 
+import android.app.Application
+import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.lib.randomua.addRandomUAPreferenceToScreen
+import eu.kanade.tachiyomi.lib.randomua.getPrefCustomUA
+import eu.kanade.tachiyomi.lib.randomua.getPrefUAType
+import eu.kanade.tachiyomi.lib.randomua.setRandomUserAgent
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -14,28 +23,40 @@ import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.util.concurrent.TimeUnit
 
 abstract class ZeistManga(
     override val name: String,
-    override val baseUrl: String,
+    val defaultBaseUrl: String,
     override val lang: String,
-) : HttpSource() {
-
+) : HttpSource(), ConfigurableSource {
+    override val baseUrl by lazy { getPrefBaseUrl() }
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+    override val client: OkHttpClient by lazy {
+        network.cloudflareClient.newBuilder()
+            .setRandomUserAgent(
+                preferences.getPrefUAType(),
+                preferences.getPrefCustomUA(),
+            )
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
     override val supportsLatest = true
-
     private val json: Json by injectLazy()
-
     private val intl by lazy { ZeistMangaIntl(lang) }
 
-    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
-        .add("Referer", "$baseUrl/")
-
+    override fun headersBuilder(): Headers.Builder = super.headersBuilder().add("Referer", "$baseUrl/")
     override fun popularMangaRequest(page: Int): Request = GET(baseUrl, headers)
-
     protected open val popularMangaSelector = "div.PopularPosts div.grid > figure"
     protected open val popularMangaSelectorTitle = "figcaption > a"
     protected open val popularMangaSelectorUrl = "figcaption > a"
@@ -147,9 +168,6 @@ abstract class ZeistManga(
     protected open val mangaDetailsSelector = ".grid.gtc-235fr"
     protected open val mangaDetailsSelectorDescription = "#synopsis"
     protected open val mangaDetailsSelectorGenres = "div.mt-15 > a[rel=tag]"
-    protected open val mangaDetailsSelectorAuthor = "span#author"
-    protected open val mangaDetailsSelectorArtist = "span#artist"
-    protected open val mangaDetailsSelectorAltName = "header > p"
     protected open val mangaDetailsSelectorInfo = ".y6x11p"
     protected open val mangaDetailsSelectorInfoTitle = "strong"
     protected open val mangaDetailsSelectorInfoDescription = "span.dt"
@@ -159,18 +177,9 @@ abstract class ZeistManga(
         val profileManga = document.selectFirst(mangaDetailsSelector)!!
         return SManga.create().apply {
             thumbnail_url = profileManga.selectFirst("img")!!.attr("abs:src")
-            description = buildString {
-                append(profileManga.select(mangaDetailsSelectorDescription).text())
-                append("\n\n")
-                profileManga.selectFirst(mangaDetailsSelectorAltName)?.text()?.takeIf { it.isNotBlank() }?.let {
-                    append("Alternative name(s): ")
-                    append(it)
-                }
-            }.trim()
+            description = profileManga.select(mangaDetailsSelectorDescription).text()
             genre = profileManga.select(mangaDetailsSelectorGenres)
                 .joinToString { it.text() }
-            author = profileManga.selectFirst(mangaDetailsSelectorAuthor)?.text()
-            artist = profileManga.selectFirst(mangaDetailsSelectorArtist)?.text()
 
             val infoElement = profileManga.select(mangaDetailsSelectorInfo)
             infoElement.forEach { element ->
@@ -214,7 +223,7 @@ abstract class ZeistManga(
     protected open val useNewChapterFeed = false
     protected open val useOldChapterFeed = false
 
-    private val chapterFeedRegex = """clwd\.run\(["'](.*?)["']\)""".toRegex()
+    private val chapterFeedRegex = """clwd\.run\('([^']+)'""".toRegex()
     private val scriptSelector = "#clwd > script"
 
     open fun getChapterFeedUrl(doc: Document): String {
@@ -429,6 +438,27 @@ abstract class ZeistManga(
             substring(0, lastIndexOf) + newValue + substring(lastIndexOf + oldValue.length)
         }
     }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val baseUrlPref = androidx.preference.EditTextPreference(screen.context).apply {
+            key = defaultBaseUrl
+            title = "Override BaseUrl"
+            summary = "For temporary uses. Updating the extension will erase this setting."
+            setDefaultValue(defaultBaseUrl)
+            dialogTitle = "Override BaseUrl"
+            dialogMessage = "Default: $defaultBaseUrl"
+
+            setOnPreferenceChangeListener { _, _ ->
+                Toast.makeText(screen.context, "Restart Tachiyomi to apply new setting.", Toast.LENGTH_LONG).show()
+                true
+            }
+        }
+        screen.addPreference(baseUrlPref)
+
+        addRandomUAPreferenceToScreen(screen)
+    }
+
+    private fun getPrefBaseUrl(): String = preferences.getString(defaultBaseUrl, defaultBaseUrl)!!
 
     companion object {
         private const val maxMangaResults = 20

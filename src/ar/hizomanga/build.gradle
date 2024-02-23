@@ -1,9 +1,9 @@
 ext {
-    extName = 'Hizomanga'
-    extClass = '.Hizomanga'
+    extName = 'Hizo Manga'
+    extClass = '.HizoManga'
     themePkg = 'madara'
     baseUrl = 'https://hizomanga.me'
-    overrideVersionCode = 2
+    overrideVersionCode = 1
 }
 
 apply from: "$rootDir/common.gradle"

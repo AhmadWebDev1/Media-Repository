@@ -3,7 +3,7 @@ ext {
     extClass = '.MangaAiLand'
     themePkg = 'zeistmanga'
     baseUrl = 'https://manga-ai-land.blogspot.com'
-    overrideVersionCode = 0
+    overrideVersionCode = 1
 }
 
 apply from: "$rootDir/common.gradle"

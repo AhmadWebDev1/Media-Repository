@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.multisrc.mangathemesia
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.lib.randomua.addRandomUAPreferenceToScreen
 import eu.kanade.tachiyomi.lib.randomua.getPrefCustomUA
@@ -43,20 +44,18 @@ import java.util.concurrent.TimeUnit
 // Formerly WPMangaStream & WPMangaReader -> MangaThemesia
 abstract class MangaThemesia(
     override val name: String,
-    override val baseUrl: String,
+    val defaultBaseUrl: String,
     override val lang: String,
     val mangaUrlDirectory: String = "/manga",
     val dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US),
 ) : ParsedHttpSource(), ConfigurableSource {
+    override val baseUrl by lazy { getPrefBaseUrl() }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
-
     protected open val json: Json by injectLazy()
-
     override val supportsLatest = true
-
     override val client: OkHttpClient by lazy {
         network.cloudflareClient.newBuilder()
             .setRandomUserAgent(
@@ -68,20 +67,20 @@ abstract class MangaThemesia(
             .build()
     }
 
-    override fun headersBuilder() = super.headersBuilder()
-        .set("Referer", "$baseUrl/")
-
+    override fun headersBuilder() = super.headersBuilder().set("Referer", "$baseUrl/")
     open val projectPageString = "/project"
 
-    // Popular (Search with popular order and nothing else)
+    // ============================== Popular ===============================
+    // Search with popular order and nothing else
     override fun popularMangaRequest(page: Int) = searchMangaRequest(page, "", FilterList(OrderByFilter("popular")))
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
 
-    // Latest (Search with update order and nothing else)
+    // =============================== Latest ===============================
+    // Search with update order and nothing else
     override fun latestUpdatesRequest(page: Int) = searchMangaRequest(page, "", FilterList(OrderByFilter("update")))
     override fun latestUpdatesParse(response: Response) = searchMangaParse(response)
 
-    // Search
+    // =============================== Search ===============================
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         if (query.startsWith(URL_SEARCH_PREFIX).not()) return super.fetchSearchManga(page, query, filters)
 
@@ -102,7 +101,6 @@ abstract class MangaThemesia(
                 MangasPage(listOf(it), false)
             }
     }
-
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = baseUrl.toHttpUrl().newBuilder()
             .addPathSegment(mangaUrlDirectory.substring(1))
@@ -146,7 +144,6 @@ abstract class MangaThemesia(
         url.addPathSegment("")
         return GET(url.build(), headers)
     }
-
     override fun searchMangaParse(response: Response): MangasPage {
         if (genrelist == null) {
             genrelist = parseGenres(response.asJsoup(response.peekBody(Long.MAX_VALUE).string()))
@@ -154,18 +151,15 @@ abstract class MangaThemesia(
 
         return super.searchMangaParse(response)
     }
-
     override fun searchMangaSelector() = ".utao .uta .imgu, .listupd .bs .bsx, .listo .bs .bsx"
-
     override fun searchMangaFromElement(element: Element) = SManga.create().apply {
         thumbnail_url = element.select("img").imgAttr()
         title = element.select("a").attr("title")
         setUrlWithoutDomain(element.select("a").attr("href"))
     }
-
     override fun searchMangaNextPageSelector() = "div.pagination .next, div.hpage .r"
 
-    // Manga details
+    // =========================== Manga Details ============================
     open val seriesDetailsSelector = "div.bigcontent, div.animefull, div.main-info, div.postbody"
     open val seriesTitleSelector = "h1.entry-title"
     open val seriesArtistSelector = ".infotable tr:contains(artist) td:last-child, .tsinfo .imptdt:contains(artist) i, .fmed b:contains(artist)+span, span:contains(artist)"
@@ -176,9 +170,7 @@ abstract class MangaThemesia(
     open val seriesTypeSelector = ".infotable tr:contains(type) td:last-child, .tsinfo .imptdt:contains(type) i, .tsinfo .imptdt:contains(type) a, .fmed b:contains(type)+span, span:contains(type) a, a[href*=type\\=]"
     open val seriesStatusSelector = ".infotable tr:contains(status) td:last-child, .tsinfo .imptdt:contains(status) i, .fmed b:contains(status)+span span:contains(status)"
     open val seriesThumbnailSelector = ".infomanga > div[itemprop=image] img, .thumb img"
-
     open val altNamePrefix = "Alternative Name: "
-
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
         document.selectFirst(seriesDetailsSelector)?.let { seriesDetails ->
             title = seriesDetails.selectFirst(seriesTitleSelector)?.text().orEmpty()
@@ -208,11 +200,9 @@ abstract class MangaThemesia(
             thumbnail_url = seriesDetails.select(seriesThumbnailSelector).imgAttr()
         }
     }
-
     protected fun String?.removeEmptyPlaceholder(): String? {
         return if (this.isNullOrBlank() || this == "-" || this == "N/A") null else this
     }
-
     open fun String?.parseStatus(): Int = when {
         this == null -> SManga.UNKNOWN
         listOf("ongoing", "publishing").any { this.contains(it, ignoreCase = true) } -> SManga.ONGOING
@@ -222,9 +212,8 @@ abstract class MangaThemesia(
         else -> SManga.UNKNOWN
     }
 
-    // Chapter list
+    // ============================ Chapter list ============================
     override fun chapterListSelector() = "div.bxcl li, div.cl li, #chapterlist li, ul li:has(div.chbox):has(div.eph-num)"
-
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
         val chapters = document.select(chapterListSelector()).map { chapterFromElement(it) }
@@ -242,18 +231,15 @@ abstract class MangaThemesia(
 
         return chapters
     }
-
     private fun parseUpdatedOnDate(date: String): Long {
         return SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(date)?.time ?: 0L
     }
-
     override fun chapterFromElement(element: Element) = SChapter.create().apply {
         val urlElements = element.select("a")
         setUrlWithoutDomain(urlElements.attr("href"))
         name = element.select(".lch a, .chapternum").text().ifBlank { urlElements.first()!!.text() }
         date_upload = element.selectFirst(".chapterdate")?.text().parseChapterDate()
     }
-
     protected open fun String?.parseChapterDate(): Long {
         if (this == null) return 0
         return try {
@@ -263,9 +249,8 @@ abstract class MangaThemesia(
         }
     }
 
-    // Pages
+    // =============================== Pages ================================
     open val pageSelector = "div#readerarea img"
-
     override fun pageListParse(document: Document): List<Page> {
         val chapterUrl = document.location()
         val htmlPages = document.select(pageSelector)
@@ -290,7 +275,6 @@ abstract class MangaThemesia(
 
         return scriptPages
     }
-
     override fun imageRequest(page: Page): Request {
         val newHeaders = headersBuilder()
             .set("Accept", "image/avif,image/webp,image/png,image/jpeg,*/*")
@@ -305,7 +289,6 @@ abstract class MangaThemesia(
      * back to the source website through admin-ajax.php.
      */
     protected open val sendViewCount: Boolean = true
-
     protected open fun countViewsRequest(document: Document): Request? {
         val wpMangaData = document.select("script:containsData(dynamic_view_ajax)").firstOrNull()
             ?.data() ?: return null
@@ -330,7 +313,6 @@ abstract class MangaThemesia(
 
     /**
      * Send the view count request to the sites endpoint.
-     *
      * @param document The response document with the wp-manga data
      */
     protected open fun countViews(document: Document) {
@@ -342,9 +324,8 @@ abstract class MangaThemesia(
         runCatching { client.newCall(request).execute().close() }
     }
 
-    // Filters
+    // ============================== Filters ===============================
     protected class AuthorFilter : Filter.Text("Author")
-
     protected class YearFilter : Filter.Text("Year")
 
     open class SelectFilter(
@@ -358,7 +339,6 @@ abstract class MangaThemesia(
     ) {
         fun selectedValue() = vals[state].second
     }
-
     protected class StatusFilter : SelectFilter(
         "Status",
         arrayOf(
@@ -369,7 +349,6 @@ abstract class MangaThemesia(
             Pair("Dropped", "dropped"),
         ),
     )
-
     protected class TypeFilter : SelectFilter(
         "Type",
         arrayOf(
@@ -380,7 +359,6 @@ abstract class MangaThemesia(
             Pair("Comic", "Comic"),
         ),
     )
-
     protected class OrderByFilter(defaultOrder: String? = null) : SelectFilter(
         "Sort By",
         arrayOf(
@@ -393,7 +371,6 @@ abstract class MangaThemesia(
         ),
         defaultOrder,
     )
-
     protected class ProjectFilter : SelectFilter(
         "Filter Project",
         arrayOf(
@@ -401,15 +378,12 @@ abstract class MangaThemesia(
             Pair("Show only project manga", "project-filter-on"),
         ),
     )
-
     protected class Genre(
         name: String,
         val value: String,
         state: Int = STATE_IGNORE,
     ) : Filter.TriState(name, state)
-
     protected class GenreListFilter(genres: List<Genre>) : Filter.Group<Genre>("Genre", genres)
-
     private var genrelist: List<Genre>? = null
     protected open fun getGenreList(): List<Genre> {
         // Filters are fetched immediately once an extension loads
@@ -419,7 +393,6 @@ abstract class MangaThemesia(
     }
 
     open val hasProjectPage = false
-
     override fun getFilterList(): FilterList {
         val filters = mutableListOf<Filter<*>>(
             Filter.Separator(),
@@ -444,7 +417,7 @@ abstract class MangaThemesia(
         return FilterList(filters)
     }
 
-    // Helpers
+    // ============================== Helpers ===============================
     /**
      * Given some string which represents an http urlString, returns path for a manga
      * which can be used to fetch its details at "$baseUrl$mangaUrlDirectory/$mangaPath"
@@ -479,12 +452,10 @@ abstract class MangaThemesia(
 
         return null
     }
-
     private fun pathLengthIs(url: HttpUrl, n: Int, strict: Boolean = false): Boolean {
         return url.pathSegments.size == n && url.pathSegments[n - 1].isNotEmpty() ||
             (!strict && url.pathSegments.size == n + 1 && url.pathSegments[n].isEmpty())
     }
-
     private fun parseGenres(document: Document): List<Genre>? {
         return document.selectFirst("ul.genrez")?.select("li")?.map { li ->
             Genre(
@@ -493,17 +464,15 @@ abstract class MangaThemesia(
             )
         }
     }
-
     protected open fun Element.imgAttr(): String = when {
         hasAttr("data-lazy-src") -> attr("abs:data-lazy-src")
         hasAttr("data-src") -> attr("abs:data-src")
         hasAttr("data-cfsrc") -> attr("abs:data-cfsrc")
         else -> attr("abs:src")
     }
-
     protected open fun Elements.imgAttr(): String = this.first()!!.imgAttr()
 
-    // Unused
+    // =============================== Unused ===============================
     override fun popularMangaSelector(): String = throw UnsupportedOperationException()
     override fun popularMangaFromElement(element: Element): SManga = throw UnsupportedOperationException()
     override fun popularMangaNextPageSelector(): String? = throw UnsupportedOperationException()
@@ -515,6 +484,21 @@ abstract class MangaThemesia(
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val baseUrlPref = androidx.preference.EditTextPreference(screen.context).apply {
+            key = defaultBaseUrl
+            title = "Override BaseUrl"
+            summary = "For temporary uses. Updating the extension will erase this setting."
+            setDefaultValue(defaultBaseUrl)
+            dialogTitle = "Override BaseUrl"
+            dialogMessage = "Default: $defaultBaseUrl"
+
+            setOnPreferenceChangeListener { _, _ ->
+                Toast.makeText(screen.context, "Restart Tachiyomi to apply new setting.", Toast.LENGTH_LONG).show()
+                true
+            }
+        }
+        screen.addPreference(baseUrlPref)
+
         addRandomUAPreferenceToScreen(screen)
     }
 
@@ -528,4 +512,6 @@ abstract class MangaThemesia(
 
         val JSON_IMAGE_LIST_REGEX = "\"images\"\\s*:\\s*(\\[.*?])".toRegex()
     }
+
+    private fun getPrefBaseUrl(): String = preferences.getString(defaultBaseUrl, defaultBaseUrl)!!
 }

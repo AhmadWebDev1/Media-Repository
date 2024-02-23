@@ -3,7 +3,7 @@ ext {
     extClass = '.GalaxyManga'
     themePkg = 'flixscans'
     baseUrl = 'https://flixscans.com'
-    overrideVersionCode = 26
+    overrideVersionCode = 1
 }
 
 apply from: "$rootDir/common.gradle"

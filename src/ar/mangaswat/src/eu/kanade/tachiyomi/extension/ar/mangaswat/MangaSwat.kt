@@ -1,15 +1,15 @@
 package eu.kanade.tachiyomi.extension.ar.mangaswat
 
 import eu.kanade.tachiyomi.multisrc.mangathemesia.MangaThemesia
-import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.source.model.SManga
 import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class MangaSwat : MangaThemesia(
     "MangaSwat",
-    "swatmanhua.com",
+    "https://swatmanhua.com",
     "ar",
     dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("ar")),
 ) {
