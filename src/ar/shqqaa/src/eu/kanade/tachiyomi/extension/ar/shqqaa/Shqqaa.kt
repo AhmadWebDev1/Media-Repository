@@ -14,15 +14,10 @@ import org.jsoup.nodes.Element
 import rx.Observable
 
 class Shqqaa : ParsedHttpSource() {
-
-    override val name = "مانجا شقاع"
-
+    override val name = "Shqqaa Manga"
     override val baseUrl = "https://www.shqqaa.com"
-
     override val lang = "ar"
-
     override val supportsLatest = true
-
     override val client: OkHttpClient = network.cloudflareClient
 
     // Popular
