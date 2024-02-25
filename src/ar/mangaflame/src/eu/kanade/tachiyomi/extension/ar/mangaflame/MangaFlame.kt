@@ -12,10 +12,10 @@ class MangaFlame : MangaThemesia(
     dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale("ar")),
 ) {
     // =========================== Manga Details ============================
-    override val seriesArtistSelector = ".tsinfo .imptdt:contains(الرسام) i"
-    override val seriesAuthorSelector = ".tsinfo .imptdt:contains(المؤلف) i"
-    override val seriesTypeSelector = ".tsinfo .imptdt:contains(النوع) i"
-    override val seriesStatusSelector = ".tsinfo .imptdt:contains(الحالة) i"
+    override val seriesArtistSelector = ".tsinfo .imptdt:contains(الرسام) i, ${super.seriesArtistSelector}"
+    override val seriesAuthorSelector = ".tsinfo .imptdt:contains(المؤلف) i, ${super.seriesAuthorSelector}"
+    override val seriesTypeSelector = ".tsinfo .imptdt:contains(النوع) i, ${super.seriesTypeSelector}"
+    override val seriesStatusSelector = ".tsinfo .imptdt:contains(الحالة) i, ${super.seriesStatusSelector}"
 
     override fun String?.parseStatus() = when {
         this == null -> SManga.UNKNOWN

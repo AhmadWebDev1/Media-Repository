@@ -31,6 +31,7 @@ class MangaSwat : MangaThemesia(
             .url(url)
             .build()
     }
+    override fun searchMangaNextPageSelector() = "a[rel=next], ${super.searchMangaNextPageSelector()}"
 
     // =========================== Manga Details ============================
     override val seriesArtistSelector = ".infox span:contains(الرسام) i, ${super.seriesArtistSelector}"
