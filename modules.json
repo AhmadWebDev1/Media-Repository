@@ -1,0 +1,56 @@
+[
+    {
+        "categories": [
+            "Manga",
+            "Manhua",
+            "Manhwa",
+            "WebToon"
+        ],
+        "url": "https://raw.githubusercontent.com/AhmadWebTech/Modules-KETSU/main/Module%20Parser%20KETSU/ARESManga.json"
+    },
+    {
+        "categories": [
+            "Manga",
+            "Manhua",
+            "Manhwa",
+            "WebToon"
+        ],
+        "url": "https://raw.githubusercontent.com/AhmadWebTech/Modules-KETSU/main/Module%20Parser%20KETSU/GalaxyManga.json"
+    },
+    {
+        "categories": [
+            "Manga",
+            "Manhua",
+            "Manhwa",
+            "WebToon"
+        ],
+        "url": "https://raw.githubusercontent.com/AhmadWebTech/Modules-KETSU/main/Module%20Parser%20KETSU/Ozulscans.json"
+    },
+    {
+        "categories": [
+            "Manga",
+            "Manhua",
+            "Manhwa",
+            "WebToon"
+        ],
+        "url": "https://raw.githubusercontent.com/AhmadWebTech/Modules-KETSU/main/Module%20Parser%20KETSU/Mangalek.json"
+    },
+    {
+        "categories": [
+            "Manga",
+            "Manhua",
+            "Manhwa",
+            "WebToon"
+        ],
+        "url": "https://raw.githubusercontent.com/AhmadWebTech/Modules-KETSU/main/Module%20Parser%20KETSU/AzoraManga.json"
+    },
+    {
+        "categories": [
+            "Manga",
+            "Manhua",
+            "Manhwa",
+            "WebToon"
+        ],
+        "url": "https://raw.githubusercontent.com/AhmadWebTech/Modules-KETSU/main/Module%20Parser%20KETSU/AREAManga.json"
+    }
+]
