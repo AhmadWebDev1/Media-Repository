@@ -1,9 +1,9 @@
 [
     {
         "iconUrl": "https://www.google.com/s2/favicons?domain=lodynet.link&sz=%size%",
-        "apiVersion": 1,
-        "repositoryUrl": "https://github.com/AhmadWebDev1/Cloudstream-Repository/Cloudstream",
-        "fileSize": 13666,
+        "apiVersion": 2,
+        "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
+        "fileSize": 13117,
         "status": 1,
         "language": "ar",
         "authors": [
@@ -15,13 +15,13 @@
         ],
         "version": 1.1,
         "internalName": "LodynetProvider",
-        "url": "https://github.com/AhmadWebDev1/Cloudstream-Repository/raw/Cloudstream-repo/LodynetProvider.cs3",
+        "url": "https://github.com/AhmadWebDev1/Media-Repository/raw/Cloudstream-repo/LodynetProvider.cs3",
         "name": "LodynetProvider"
     },
     {
         "iconUrl": "https://www.google.com/s2/favicons?domain=movie4u.watch&sz=%size%",
         "apiVersion": 1,
-        "repositoryUrl": "https://github.com/AhmadWebDev1/Cloudstream-Repository/Cloudstream",
+        "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
         "fileSize": 12288,
         "status": 1,
         "language": "ar",
@@ -34,7 +34,7 @@
         ],
         "version": 1.2,
         "internalName": "Movs4uProvider",
-        "url": "https://github.com/AhmadWebDev1/Cloudstream-Repository/raw/Cloudstream-repo/Movs4uProvider.cs3",
+        "url": "https://github.com/AhmadWebDev1/Media-Repository/raw/Cloudstream-repo/Movs4uProvider.cs3",
         "name": "Movs4uProvider"
     }
 ]
