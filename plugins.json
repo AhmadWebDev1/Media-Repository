@@ -19,6 +19,25 @@
         "name": "LodynetProvider"
     },
     {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=www.arabic-toons.com&sz=%size%",
+        "apiVersion": 2,
+        "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
+        "fileSize": 13117,
+        "status": 1,
+        "language": "ar",
+        "authors": [
+            "Ahmad"
+        ],
+        "tvTypes": [
+            "TvSeries",
+            "Movie"
+        ],
+        "version": 1.1,
+        "internalName": "ArabictoonsProvider",
+        "url": "https://github.com/AhmadWebDev1/Media-Repository/raw/Cloudstream-repo/ArabictoonsProvider.cs3",
+        "name": "ArabictoonsProvider"
+    },
+    {
         "iconUrl": "https://www.google.com/s2/favicons?domain=movie4u.watch&sz=%size%",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
