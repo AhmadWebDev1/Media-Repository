@@ -1,7 +1,7 @@
 [
     {
         "iconUrl": "https://www.google.com/s2/favicons?domain=lodynet.link&sz=%size%",
-        "apiVersion": 2,
+        "apiVersion": 1,
         "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
         "fileSize": 13117,
         "status": 1,
@@ -13,16 +13,16 @@
             "TvSeries",
             "Movie"
         ],
-        "version": 1.1,
+        "version": 2,
         "internalName": "LodynetProvider",
         "url": "https://github.com/AhmadWebDev1/Media-Repository/raw/Cloudstream-repo/LodynetProvider.cs3",
         "name": "LodynetProvider"
     },
     {
         "iconUrl": "https://www.google.com/s2/favicons?domain=www.arabic-toons.com&sz=%size%",
-        "apiVersion": 2,
+        "apiVersion": 1,
         "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
-        "fileSize": 13117,
+        "fileSize": 9009,
         "status": 1,
         "language": "ar",
         "authors": [
@@ -32,7 +32,7 @@
             "TvSeries",
             "Movie"
         ],
-        "version": 1.1,
+        "version": 1,
         "internalName": "ArabictoonsProvider",
         "url": "https://github.com/AhmadWebDev1/Media-Repository/raw/Cloudstream-repo/ArabictoonsProvider.cs3",
         "name": "ArabictoonsProvider"
@@ -51,7 +51,7 @@
             "TvSeries",
             "Movie"
         ],
-        "version": 1.2,
+        "version": 1,
         "internalName": "Movs4uProvider",
         "url": "https://github.com/AhmadWebDev1/Media-Repository/raw/Cloudstream-repo/Movs4uProvider.cs3",
         "name": "Movs4uProvider"
