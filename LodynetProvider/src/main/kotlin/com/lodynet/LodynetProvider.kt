@@ -25,8 +25,8 @@ class Lodynet : MainAPI() {
         "$mainUrl/category/%D8%A7%D9%81%D9%84%D8%A7%D9%85-%D8%A7%D8%AC%D9%86%D8%A8%D9%8A%D8%A9-%D9%85%D8%AA%D8%B1%D8%AC%D9%85%D8%A9-a/page/" to "English Movies",
         "$mainUrl/category/%D8%A7%D9%86%D9%8A%D9%85%D9%8A/page/" to "Anime Movies",
         "$mainUrl/b%D8%A7%D9%84%D9%85%D8%B3%D9%84%D8%B3%D9%84%D8%A7%D8%AA-%D9%87%D9%86%D8%AF%D9%8A%D8%A9-%D9%85%D8%AA%D8%B1%D8%AC%D9%85%D8%A9/page/" to "Indian Series",
-        "$mainUrl/dubbed-indian-series-p4/page/" to "Dubbed Indian Series",
-        "$mainUrl/turkish-series-2b/page/" to "Turkish Series",
+        "$mainUrl/dubbed-indian-series-p5/page/" to "Dubbed Indian Series",
+        "$mainUrl/turkish-series/page/" to "Turkish Series",
         "$mainUrl/dubbed-turkish-series-g/page/" to "Dubbed Turkish Series",
         "$mainUrl/korean-series-a/page/" to "Korean Series",
         "$mainUrl/category/%D9%85%D8%B3%D9%84%D8%B3%D9%84%D8%A7%D8%AA-%D8%B5%D9%8A%D9%86%D9%8A%D8%A9-%D9%85%D8%AA%D8%B1%D8%AC%D9%85%D8%A9/page/" to "Chinese Series",
@@ -51,41 +51,51 @@ class Lodynet : MainAPI() {
     }
 
     override suspend fun load(url: String): LoadResponse {
-        val episodes = ArrayList<Episode>()
         val doc = app.get(url).document
-        val posterUrl = doc.select("img#SinglePrimaryImage").firstOrNull()?.attr("data-src")?.takeIf { it.isNotBlank() } ?: doc.select("img#SinglePrimaryImage").attr("src") ?: ""
-        val title = extractTitle(doc)
+        val episodes = ArrayList<Episode>()
+        val posterUrl = listOf(doc.select("img#SinglePrimaryImage"), doc.select(".LodyBlock .Poster img")).asSequence().mapNotNull { it.attr("data-src").takeIf { src -> src.isNotBlank() } ?: it.attr("src").takeIf { src -> src.isNotBlank() } }.firstOrNull().orEmpty()
+        val title = cleanTitle(doc.select(".TitleSingle h1").takeIf { it.text().contains("فيلم") }?.text() ?: doc.select(".TitleSingle > ul > li:nth-child(1) > a").takeIf { it.isNotEmpty() }?.text() ?: doc.select(".TitleInner h2").text())
         val synopsis = doc.select(".DetailsBoxContentInner").text()
         val isMovie = doc.select(".category").text().contains("افلام")
-
-        val currentPageEpisodes = extractEpisodes(doc, title)
-        episodes.addAll(currentPageEpisodes)
 
         var currentPage = 1
         var hasNextPage = true
 
         while (hasNextPage) {
-            val nextPageUrl = "$url/page/$currentPage"
-            val nextPageDoc = app.get(nextPageUrl).document
+            val currentDoc = if (currentPage == 1) doc else app.get("$url/page/$currentPage").document
 
-            val nextPageEpisodes = extractEpisodes(nextPageDoc, title)
-            episodes.addAll(nextPageEpisodes)
+            currentDoc.select(".BlocksArea li>a").forEach { el ->
+                val episodeUrl = el.attr("href").takeIf { it.isNotBlank() }
+                val episodeTitle = el.select(".SliderItemDescription h2").text().replace(title, "").trim().takeIf { it.isNotBlank() }
+                val episodePoster = el.select("img").firstOrNull()?.attr("data-src")?.takeIf { it.isNotBlank() } ?: el.select("img").attr("src").orEmpty()
 
-            val nextPageElement = nextPageDoc.select(".pagination .next")
-            hasNextPage = nextPageElement.isNotEmpty()
-
+                if (episodeUrl != null && episodeTitle != null) {
+                    episodes.add(
+                        Episode(
+                            episodeUrl,
+                            cleanTitle(episodeTitle),
+                            null,
+                            posterUrl = episodePoster
+                        )
+                    )
+                }
+            }
+            hasNextPage = currentDoc.select(".pagination .next").isNotEmpty()
             currentPage++
         }
 
-        return if (isMovie) {
-            newMovieLoadResponse(title, url, TvType.Movie, url) {
-                this.posterUrl = posterUrl
-                this.plot = synopsis
-            }
-        } else {
-            newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes.distinct().reversed()) {
-                this.posterUrl = posterUrl
-            }
+        val loadResponse = when {
+            isMovie -> newMovieLoadResponse(title, url, TvType.Movie, url)
+            else -> newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes.distinct().reversed())
+        }
+        return loadResponse.apply {
+            this.posterUrl = posterUrl
+            this.plot = synopsis
+            this.rating = null
+            this.tags = null
+            this.trailers = mutableListOf<TrailerData>()
+            this.recommendations = listOf()
+            this.actors = null
         }
     }
 
@@ -93,50 +103,27 @@ class Lodynet : MainAPI() {
         val url = select("a").attr("href")
         val title = select(".SliderItemDescription h2").text()
         val posterUrl = select("img").firstOrNull()?.attr("data-src")?.takeIf { it.isNotBlank() } ?: select("img").attr("src") ?: ""
-        return MovieSearchResponse(
-            cleanTitle(title),
-            url,
-            name,
-            null,
-            posterUrl,
-            null,
+
+        return if (url.isNotBlank() && title.isNotBlank()) {
+            MovieSearchResponse(
+                name = cleanTitle(title),
+                url = url,
+                apiName = name,
+                type = null,
+                posterUrl = posterUrl,
+                year = null,
+                quality = null,
+            )
+        } else {
             null
-        )
+        }
     }
 
     private fun cleanTitle(title: String): String {
-        return title.replace("فيلم|مترجم|مسلسل|مشاهدة".toRegex(), "")
-        .replace("التايلاندي|الصيني|عربي|للعربي|الكوري|حصرياً".toRegex(), "")
-        .replace("الأكشن|والرعب|الرومانسية|والميلودراما||والدراما|والخيال|والإثارة|الإثارة|المغامرة|والمغامرة|والخيال العلمي|الانيميشن|و الفانتازيا".toRegex(), "")
+        return title.replace("الفيلم|فيلم|مترجم|مسلسل|مشاهدة|حصرياًً".toRegex(), "")
+        .replace("التايلاندي|الصيني|عربي|للعربي|الكوري|التركي|الياباني|الأندونيسي|الاندونيسي".toRegex(), "")
+        .replace("\\bو?(الأكشن|الرعب|الرومانسية|رومانسية|الميلودراما|الدراما|الخيال|الإثارة|المغامرة|المغامرات|الخيال العلمي|الانيميشن|الفانتازيا|الجريمة|الوثائقي|الكوميدي|الكوميديا|الغموض|التاريخي|الأكش|الإثارو|السياسي|العلمي)\\b".toRegex(), "")
         .trim()
-    }
-
-    private fun extractEpisodes(doc: Document, title: String): List<Episode> {
-        val episodes = ArrayList<Episode>()
-        
-        doc.select(".BlocksArea li>a").forEach { el ->
-            episodes.add(
-                Episode(
-                    el.attr("href"),
-                    cleanTitle(el.select(".SliderItemDescription h2").text().replace(title, "")),
-                    null,
-                    posterUrl = el.select("img").firstOrNull()?.attr("data-src")?.takeIf { it.isNotBlank() } ?: el.select("img").attr("src") ?: ""
-                )
-            )
-        }
-        
-        return episodes
-    }
-
-    private fun extractTitle(doc: Document): String {
-        val titleElement = doc.select(".TitleSingle > ul > li:nth-child(1) > a")
-        return if (doc.select(".TitleSingle h1").text().contains("فيلم")) {
-            cleanTitle(doc.select(".TitleSingle h1").text().replace("مترجم", ""))
-        } else if (titleElement.isNotEmpty()) {
-            cleanTitle(titleElement.text())
-        } else {
-            cleanTitle(doc.select(".TitleInner h2").text())
-        }
     }
 
     override suspend fun loadLinks(
