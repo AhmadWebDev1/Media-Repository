@@ -9,7 +9,6 @@ import org.jsoup.nodes.Element
 import org.json.JSONObject
 import kotlin.text.RegexOption
 import java.net.URI
-import java.util.Locale
 
 class LodynetProvider : MainAPI() {
     override var lang = "ar"

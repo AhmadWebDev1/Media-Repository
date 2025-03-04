@@ -9,5 +9,5 @@ cloudstream {
 	language = "ar"
     status = 1
     tvTypes = listOf( "TvSeries" , "Movie" )
-    iconUrl = "https://www.google.com/s2/favicons?domain=cima4u.day&sz=%size%"
+    iconUrl = "https://www.google.com/s2/favicons?sz=%size%&domain=lodynet.io"
 }
