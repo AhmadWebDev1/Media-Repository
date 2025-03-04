@@ -1,6 +1,7 @@
-version = 2
+version = 1
 dependencies {
     implementation("com.google.firebase:firebase-crashlytics-buildtools:3.0.3")
+    implementation(project(":lib:videoExtractor"))
 }
 
 cloudstream {
@@ -9,5 +10,5 @@ cloudstream {
 	language = "ar"
     status = 1
     tvTypes = listOf( "TvSeries" , "Movie" )
-    iconUrl = "https://www.google.com/s2/favicons?domain=cima4u.day&sz=%size%"
+    iconUrl = "https://www.google.com/s2/favicons?sz=%size%&domain=cima4u.day"
 }

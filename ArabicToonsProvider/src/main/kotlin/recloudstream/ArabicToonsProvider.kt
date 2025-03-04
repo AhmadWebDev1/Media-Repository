@@ -1,15 +1,11 @@
-package com.arabictoons
+package recloudstream
 
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.LoadResponse.Companion.addMalId
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.loadExtractor
 import com.lagradost.cloudstream3.utils.Qualities
 import org.jsoup.nodes.Element
-import java.util.regex.Pattern
-import java.util.regex.Matcher
 
-class ArabicToons : MainAPI() {
+class ArabicToonsProvider : MainAPI() {
     override var lang = "ar"
     override var mainUrl = "https://www.arabic-toons.com"
     override var name = "ArabicToons"
