@@ -1,57 +1,55 @@
 [
     {
-        "iconUrl": "https://www.google.com/s2/favicons?domain=lodynet.link&sz=%size%",
+        "iconUrl": "https://www.google.com/s2/favicons?sz=%size%&domain=lodynet.link",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
         "fileSize": 13234,
         "status": 1,
         "language": "ar",
-        "authors": [
-            "Ahmad"
-        ],
-        "tvTypes": [
-            "TvSeries",
-            "Movie"
-        ],
+        "authors": [ "Ahmad" ],
+        "tvTypes": [ "TvSeries", "Movie" ],
         "version": 2,
         "internalName": "LodynetProvider",
         "url": "https://github.com/AhmadWebDev1/Media-Repository/raw/Cloudstream-repo/LodynetProvider.cs3",
         "name": "LodynetProvider"
     },
     {
-        "iconUrl": "https://www.google.com/s2/favicons?domain=www.arabic-toons.com&sz=%size%",
+        "iconUrl": "https://www.google.com/s2/favicons?sz=%size%&domain=cima4u.day",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
+        "fileSize": 14979,
+        "status": 1,
+        "language": "ar",
+        "authors": [ "Ahmad" ],
+        "tvTypes": [ "TvSeries", "Movie" ],
+        "version": 1,
+        "internalName": "Cima4uProvider",
+        "url": "https://github.com/AhmadWebDev1/Media-Repository/raw/Cloudstream-repo/Cima4uProvider.cs3",
+        "name": "Cima4uProvider"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?sz=%size%&domain=www.arabic-toons.com",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
         "fileSize": 9501,
         "status": 1,
         "language": "ar",
-        "authors": [
-            "Ahmad"
-        ],
-        "tvTypes": [
-            "Anime",
-            "AnimeMovie",
-            "Live"
-        ],
+        "authors": [ "Ahmad" ],
+        "tvTypes": [ "Anime", "AnimeMovie", "Live" ],
         "version": 1,
         "internalName": "ArabicToonsProvider",
         "url": "https://github.com/AhmadWebDev1/Media-Repository/raw/Cloudstream-repo/ArabicToonsProvider.cs3",
         "name": "ArabicToonsProvider"
     },
     {
-        "iconUrl": "https://www.google.com/s2/favicons?domain=movie4u.watch&sz=%size%",
+        "iconUrl": "https://www.google.com/s2/favicons?sz=%size%&domain=movie4u.watch",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
         "fileSize": 12288,
         "status": 1,
         "language": "ar",
-        "authors": [
-            "Ahmad"
-        ],
-        "tvTypes": [
-            "TvSeries",
-            "Movie"
-        ],
+        "authors": [ "Ahmad" ],
+        "tvTypes": [ "TvSeries", "Movie" ],
         "version": 1,
         "internalName": "Movs4uProvider",
         "url": "https://github.com/AhmadWebDev1/Media-Repository/raw/Cloudstream-repo/Movs4uProvider.cs3",
