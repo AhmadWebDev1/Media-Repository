@@ -8,41 +8,28 @@ import org.json.JSONObject
 import org.jsoup.nodes.Element
 import java.net.URI
 
-class Cima4uProvider : MainAPI() {
+class CimaClubProvider : MainAPI() {
     override var lang = "ar"
-    override var mainUrl = "https://cima4u.day"
-    override var name = "Cima4u"
+    override var mainUrl = "https://cimaclub.watch"
+    override var name = "CimaClub"
     override val usesWebView = false
     override val hasMainPage = true
     override val supportedTypes = setOf(TvType.TvSeries, TvType.Movie)
 
     override val mainPage = mainPageOf(
-        "1755289" to "Arabic Movies",
-        "230" to "Foreign Movies",
-        "54" to "Indian Movies",
-        "494" to "Asian Movies",
-        "3218" to "Anime Movies",
-        "1775720" to "Arabic Series",
-        "102" to "Foreign Series",
-        "591" to "Turkish Series",
-        "5188" to "Indian Series",
-        "494" to "Asian Series",
-        "78" to "Anime Series",
-        "635" to "TV programmes",
-        "1779153" to "Plays",
+        "$mainUrl/category/all-content/all-movies/" to "Movies",
+        "$mainUrl/full-series/" to "Series",
+        "$mainUrl/category/برامج-تليفزيونية/" to "TV programmes",
+        "$mainUrl/category/مصارعة-حرة/" to "WWE",
     )
 
     private val seenTitles = mutableSetOf<String>()
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val doc = app.post("$mainUrl/wp-admin/admin-ajax.php", data = mapOf("action" to "load_more_posts", "taxonomy" to "category", "term_id" to request.data, "page" to page.toString())).document
-        val list = doc.select("li.MovieBlock")
-            .distinctBy { it.select(".BoxTitle h3").text().cleanTitle() }
-            .filter { element ->
-                element.selectFirst(".BoxTitle")?.ownText()?.cleanTitle()?.takeIf { it.isNotEmpty() }?.let { seenTitles.add(it) } != null
-                        || element.select("a").attr("href").let { !it.contains("?p=") || it.substringAfter("?p=").toIntOrNull() == null  }
-            }
+        val doc = app.get(request.data + "page/$page/").document
+        val list = doc.select(".BlocksHolder .Small--Box")
+            .filter { element -> element.select("inner--title h2").text().cleanTitle().let { it.isNotEmpty() && seenTitles.add(it) } }
             .mapNotNull { element -> element.toSearchResponse() }
-        val nextPageExists = doc.select("li.MovieBlock").isNotEmpty()
+        val nextPageExists = doc.select(".pagination .next").isNotEmpty()
 
         return newHomePageResponse(request.name, list, hasNext = nextPageExists)
     }
@@ -56,38 +43,33 @@ class Cima4uProvider : MainAPI() {
 
         while (hasNextPage) {
             val doc = app.get("$mainUrl/?s=$q&page=$currentPage").document
-            val elements = doc.select("li.MovieBlock")
+            val elements = doc.select(".BlocksHolder .Small--Box")
             allElements.addAll(elements)
             hasNextPage = doc.select(".pagination .next").isNotEmpty()
             currentPage++
         }
 
-        val uniqueElements = allElements.filter { element -> element.selectFirst(".BoxTitle")?.ownText()?.cleanTitle() ?.takeIf { it.isNotEmpty() } ?.let { seenTitlesSearch.add(it) } != null }
+        val uniqueElements = allElements.filter { element -> element.select("inner--title h2").text().cleanTitle().let { it.isNotEmpty() && seenTitlesSearch.add(it) } }
 
         return uniqueElements.mapNotNull { it.toSearchResponse() }
     }
 
     override suspend fun load(url: String): LoadResponse {
         val doc = app.get(url).document
-        val isMovie = doc.select(".EpisodesList a").isEmpty()
-        val poster = doc.select(".SinglePoster img").attr("src")
-        val title = doc.select("h1[itemprop=\"name\"]").text().cleanTitle()
-        val description = doc.select("p[itemprop=\"description\"]").text()
-        val types = doc.select("li:contains(الانواع : ) a").map { it.text().trim() }.filter { it.isNotBlank() }.toString()
-        val recommendations = doc.select("li.MovieBlock")
-            .distinctBy { it.selectFirst(".BoxTitle")?.ownText()?.cleanTitle() }
-            .mapNotNull { element -> element.toSearchResponse() }
+        val isMovie = doc.select(".Divhard_left").isNotEmpty()
+        val poster = doc.select(".image img").attr("data-src")
+        val title = doc.select(".PostTitle a").text().cleanTitle()
+        val description = doc.select(".StoryArea").text()
+        val recommendations = doc.select("section.otherser .Small--Box").mapNotNull { element -> element.toSearchResponse() }
 
-        val episodes = ArrayList<Episode>()
-        doc.select(".EpisodesList a").forEach { el ->
-            episodes.add(
-                Episode(
-                    data = el.attr("href"),
-                    name = el.text(),
-                    season = null,
-                    posterUrl = poster
-                )
-            )
+        val episodes = arrayListOf<Episode>()
+        doc.select(".allepcont a").apmap {
+            episodes.add(Episode(
+                data = it.attr("href"),
+                name = Regex("حلقة\\s+(\\d+)").find(it.select(".ep-info h2").text())?.value.toString(),
+                season = null,
+                posterUrl = poster
+            ))
         }
 
         val loadResponse = when {
@@ -107,8 +89,8 @@ class Cima4uProvider : MainAPI() {
 
     private fun Element.toSearchResponse(): SearchResponse? {
         val url = select("a").attr("href")
-        val title = select(".BoxTitle h3").text().cleanTitle().ifEmpty { selectFirst(".BoxTitle")?.ownText()?.cleanTitle().orEmpty() }
-        val poster = selectFirst("img[data-image]")?.attr("data-image") ?: selectFirst("div[style*='background-image']")?.attr("style")?.substringAfter("url(")?.substringBefore(")")?.replace(Regex("['\"]"), "")
+        val title = select("inner--title h2").text().cleanTitle()
+        val poster = select("img[data-src]").attr("data-src")
         return if (url.isNotBlank() && title.isNotBlank()) {
             MovieSearchResponse(
                 name = title.cleanTitle(),
@@ -125,10 +107,10 @@ class Cima4uProvider : MainAPI() {
     }
 
     private fun String.cleanTitle(): String {
-        return this.replace("الفيلم|فيلم|مترجم|مترجمة|مسلسل|مشاهدة|حصرياًً|كامل|اونلاين|اون لاين".toRegex(), "")
+        return this.replace("الفيلم|فيلم|مترجم|مترجمة|مسلسل|مشاهدة|حصرياًً|كامل|اونلاين|اون لاين|والاخيرة".toRegex(), "")
             .replace("انمي|برنامج".toRegex(), "")
-            //.replace("الحلقة\\s+(\\d+)".toRegex(), "")
-            .replace("الحلقة\\s+\\d+.*".toRegex(), "")
+            .replace("الحلقة\\s+(\\d+)".toRegex(), "")
+            .replace("حلقة\\s+(\\d+)".toRegex(), "")
             .trim()
     }
 
@@ -139,11 +121,11 @@ class Cima4uProvider : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         return try {
-            val doc = app.get("$data?wat=1").document
+            val doc = app.get(data + "watch/").document
 
-            doc.select(".serversWatchSide a").forEach { el ->
-                val iframeUrl = el.attr("data-embed")
-                val iframeName = el.text()
+            doc.select(".ServersList li").forEach { el ->
+                val iframeUrl = el.attr("data-watch")
+                val iframeName = el.ownText()
 
                 if (iframeUrl.isNotEmpty()) {
                     val domain = getMainDomain(iframeUrl).toString()

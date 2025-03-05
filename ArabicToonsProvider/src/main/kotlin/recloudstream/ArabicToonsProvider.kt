@@ -41,7 +41,6 @@ class ArabicToonsProvider : MainAPI() {
         return HomePageResponse(listOf(homePageList), hasNext)
     }
 
-
     override suspend fun search(query: String): List<SearchResponse> {
         val q = query.replace(" ", "+")
         val urls = listOf(
