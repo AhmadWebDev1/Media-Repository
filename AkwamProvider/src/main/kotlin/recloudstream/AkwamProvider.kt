@@ -19,7 +19,7 @@ class AkwamProvider : MainAPI() {
     override val mainPage = mainPageOf(
         "$mainUrl/movies" to "Movies",
         "$mainUrl/series" to "Series",
-        "$mainUrl/shows" to "TV programmes",
+        "$mainUrl/shows" to "Shows",
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
