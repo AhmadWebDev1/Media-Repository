@@ -19,7 +19,7 @@ class CimaClubProvider : MainAPI() {
     override val mainPage = mainPageOf(
         "$mainUrl/category/all-content/all-movies/" to "Movies",
         "$mainUrl/full-series/" to "Series",
-        "$mainUrl/category/برامج-تليفزيونية/" to "TV programmes",
+        "$mainUrl/category/برامج-تليفزيونية/" to "Shows",
         "$mainUrl/category/مصارعة-حرة/" to "WWE",
     )
 
