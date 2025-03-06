@@ -14,7 +14,7 @@ class AkwamProvider : MainAPI() {
     override var name = "Akwam"
     override val usesWebView = false
     override val hasMainPage = true
-    override val supportedTypes = setOf(TvType.TvSeries, TvType.Movie)
+    override val supportedTypes = setOf(TvType.TvSeries, TvType.Movie, TvType.Anime)
 
     override val mainPage = mainPageOf(
         "$mainUrl/movies" to "Movies",
