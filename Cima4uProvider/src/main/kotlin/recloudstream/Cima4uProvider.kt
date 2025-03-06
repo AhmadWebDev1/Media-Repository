@@ -28,7 +28,7 @@ class Cima4uProvider : MainAPI() {
         "5188" to "Indian Series",
         "494" to "Asian Series",
         "78" to "Anime Series",
-        "635" to "TV programmes",
+        "635" to "Shows",
         "1779153" to "Plays",
     )
 
