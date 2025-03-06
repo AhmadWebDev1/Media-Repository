@@ -9,6 +9,6 @@ cloudstream {
     authors = listOf( "Ahmad" )
 	language = "ar"
     status = 1
-    tvTypes = listOf( "TvSeries" , "Movie" )
+    tvTypes = listOf("TvSeries", "Movie", "Anime")
     iconUrl = "https://www.google.com/s2/favicons?sz=%size%&domain=muvtime3.shop"
 }
