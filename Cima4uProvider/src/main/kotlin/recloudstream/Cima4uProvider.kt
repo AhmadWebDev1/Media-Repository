@@ -14,7 +14,7 @@ class Cima4uProvider : MainAPI() {
     override var name = "Cima4u"
     override val usesWebView = false
     override val hasMainPage = true
-    override val supportedTypes = setOf(TvType.TvSeries, TvType.Movie)
+    override val supportedTypes = setOf(TvType.TvSeries, TvType.Movie, TvType.Anime)
 
     override val mainPage = mainPageOf(
         "1755289" to "Arabic Movies",
