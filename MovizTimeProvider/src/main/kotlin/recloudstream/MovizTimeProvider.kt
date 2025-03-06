@@ -12,7 +12,7 @@ class MovizTimeProvider : MainAPI() {
     override var name = "MovizTime"
     override val usesWebView = false
     override val hasMainPage = true
-    override val supportedTypes = setOf(TvType.TvSeries, TvType.Movie)
+    override val supportedTypes = setOf(TvType.TvSeries, TvType.Movie, TvType.Anime)
 
     override val mainPage = mainPageOf(
         "$mainUrl/category/أفلام-أجنبية/" to "Movies",
