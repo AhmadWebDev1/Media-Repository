@@ -105,7 +105,7 @@
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
         "fileSize": 13130,
-        "status": 0,
+        "status": 1,
         "language": "ar",
         "authors": ["Ahmad"],
         "tvTypes": ["TvSeries", "Movie", "Anime"],
