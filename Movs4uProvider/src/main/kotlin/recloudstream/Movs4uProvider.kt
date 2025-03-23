@@ -5,7 +5,7 @@ import com.lagradost.cloudstream3.utils.ExtractorLink
 import com.lagradost.cloudstream3.network.CloudflareKiller
 import org.jsoup.nodes.Element
 
-class Movie4uProvider : MainAPI() {
+class Movs4uProvider : MainAPI() {
     override var lang = "ar"
     override var mainUrl = "https://movie4u.watch"
     override var name = "Movie4u"
