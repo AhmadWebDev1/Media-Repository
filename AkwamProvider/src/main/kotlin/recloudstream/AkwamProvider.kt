@@ -19,7 +19,7 @@ class AkwamProvider : MainAPI() {
     override val mainPage = mainPageOf(
         "$mainUrl/movies" to "Movies",
         "$mainUrl/series" to "Series",
-        "$mainUrl/shows" to "Shows",
+        "$mainUrl/shows" to "Shows"
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
@@ -52,15 +52,18 @@ class AkwamProvider : MainAPI() {
         val isMovie = doc.select(".qualities").isNotEmpty()
         val poster = doc.select("picture img").attr("src")
         val title = doc.select("h1.entry-title").text().cleanTitle()
-        val description = doc.select(".text-white p").text()
+        val synopsis = doc.select(".text-white p").text()
+        val tags = doc.select(".font-size-16.align-items-center > a").map { it.text().trim() }
         val recommendations = doc.select(".more .entry-box").mapNotNull { element -> element.toSearchResponse() }
-
         val episodes = arrayListOf<Episode>()
+
         doc.select("#series-episodes .bg-primary2").apmap {
+            val episodeNr = Regex("حلقة\\s+(\\d+)").find(it.select(".text-white a").text())?.groupValues?.get(1)?.toInt()
             episodes.add(Episode(
                 data = it.select("a").attr("href"),
-                name = Regex("حلقة\\s+(\\d+)").find(it.select(".text-white a").text())?.value.toString(),
+                name = "الحلقة $episodeNr",
                 season = null,
+                episode = episodeNr,
                 posterUrl = it.select("picture img").attr("src").takeIf { it.isNotEmpty() } ?: poster
             ))
         }
@@ -71,12 +74,9 @@ class AkwamProvider : MainAPI() {
         }
         return loadResponse.apply {
             this.posterUrl = poster
-            this.plot = description
-            this.rating = null
-            this.tags = null
-            this.trailers = mutableListOf<TrailerData>()
+            this.plot = synopsis
+            this.tags = tags
             this.recommendations = recommendations
-            this.actors = null
         }
     }
 
@@ -84,19 +84,13 @@ class AkwamProvider : MainAPI() {
         val url = select("a").attr("href")
         val title = select(".entry-title a").text().cleanTitle()
         val poster = select("img[data-src]").attr("data-src")
-        return if (url.isNotBlank() && title.isNotBlank()) {
-            MovieSearchResponse(
-                name = title.cleanTitle(),
-                url = url,
-                apiName = name,
-                type = null,
-                posterUrl = poster,
-                year = null,
-                quality = null,
-            )
-        } else {
-            null
-        }
+
+        return MovieSearchResponse(
+            name = title.cleanTitle(),
+            url = url,
+            apiName = name,
+            posterUrl = poster
+        )
     }
 
     private fun String.cleanTitle(): String {
@@ -113,36 +107,24 @@ class AkwamProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        return try {
-            val doc2 = app.get(data).document
-            val baseID = Regex("/(?:movie|series|episode)/(\\d+)/").find(data)?.groupValues?.get(1)
-            val watchID = Regex("/watch/(\\d+)").find(doc2.select(".link-show").attr("href"))?.groupValues?.get(1)
-            val doc = app.get("$mainUrl/watch/$watchID/$baseID").document
+        val doc2 = app.get(data).document
+        val baseID = Regex("/(?:movie|series|episode)/(\\d+)/").find(data)?.groupValues?.get(1)
+        val watchID = Regex("/watch/(\\d+)").find(doc2.select(".link-show").attr("href"))?.groupValues?.get(1)
+        val doc = app.get("$mainUrl/watch/$watchID/$baseID").document
 
-            doc.select("video source").forEach { el ->
-                val iframeUrl = el.attr("src")
-                val iframeName = el.attr("size")
+        doc.select("video source").forEach { el ->
+            val iframeUrl = el.attr("src")
+            val iframeName = el.attr("size")
 
-                if (iframeUrl.isNotEmpty()) {
-                    iframeUrl.let { url ->
-                        callback(
-                            ExtractorLink(
-                                source = name,
-                                name = "$name $iframeName",
-                                url = url,
-                                referer = mainUrl,
-                                quality = Qualities.Unknown.value,
-                                isM3u8 = url.contains("m3u8")
-                            )
-                        )
-                    }
-                }
-            }
-
-            true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
+            callback(ExtractorLink(
+                source = name,
+                name = "$name $iframeName",
+                url = iframeUrl,
+                referer = mainUrl,
+                quality = Qualities.Unknown.value,
+                isM3u8 = iframeUrl.contains("m3u8")
+            ))
         }
+        return true
     }
 }

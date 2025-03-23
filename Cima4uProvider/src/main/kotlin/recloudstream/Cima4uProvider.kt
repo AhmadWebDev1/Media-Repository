@@ -2,11 +2,7 @@ package recloudstream
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.JsUnpacker
-import com.lagradost.cloudstream3.utils.Qualities
-import org.json.JSONObject
 import org.jsoup.nodes.Element
-import java.net.URI
 
 class Cima4uProvider : MainAPI() {
     override var lang = "ar"
@@ -29,7 +25,7 @@ class Cima4uProvider : MainAPI() {
         "494" to "Asian Series",
         "78" to "Anime Series",
         "635" to "Shows",
-        "1779153" to "Plays",
+        "1779153" to "Plays"
     )
 
     private val seenTitles = mutableSetOf<String>()
@@ -41,7 +37,7 @@ class Cima4uProvider : MainAPI() {
                 element.selectFirst(".BoxTitle")?.ownText()?.cleanTitle()?.takeIf { it.isNotEmpty() }?.let { seenTitles.add(it) } != null
                         || element.select("a").attr("href").let { !it.contains("?p=") || it.substringAfter("?p=").toIntOrNull() == null  }
             }
-            .mapNotNull { element -> element.toSearchResponse() }
+            .map { element -> element.toSearchResponse() }
         val nextPageExists = doc.select("li.MovieBlock").isNotEmpty()
 
         return newHomePageResponse(request.name, list, hasNext = nextPageExists)
@@ -50,21 +46,24 @@ class Cima4uProvider : MainAPI() {
     private val seenTitlesSearch = mutableSetOf<String>()
     override suspend fun search(query: String): List<SearchResponse> {
         val q = query.replace(" ", "+")
-        val allElements = mutableListOf<Element>()
-        var currentPage = 1
-        var hasNextPage = true
+        val maxPages = 5
+        val results = mutableListOf<SearchResponse>()
 
-        while (hasNextPage) {
-            val doc = app.get("$mainUrl/?s=$q&page=$currentPage").document
+        for (page in 1..maxPages) {
+            val doc = app.get("$mainUrl/?s=$q&page=$page").document
             val elements = doc.select("li.MovieBlock")
-            allElements.addAll(elements)
-            hasNextPage = doc.select(".pagination .next").isNotEmpty()
-            currentPage++
+
+            elements.forEach { element ->
+                val title = element.select(".BoxTitle").text()
+                    .cleanTitle()
+                if (title.isNotEmpty() && seenTitlesSearch.add(title)) {
+                    element.toSearchResponse().let { results.add(it) }
+                }
+            }
+
+            if (doc.select(".pagination .next").isNotEmpty()) break
         }
-
-        val uniqueElements = allElements.filter { element -> element.selectFirst(".BoxTitle")?.ownText()?.cleanTitle() ?.takeIf { it.isNotEmpty() } ?.let { seenTitlesSearch.add(it) } != null }
-
-        return uniqueElements.mapNotNull { it.toSearchResponse() }
+        return results.distinctBy { it.name }
     }
 
     override suspend fun load(url: String): LoadResponse {
@@ -72,22 +71,20 @@ class Cima4uProvider : MainAPI() {
         val isMovie = doc.select(".EpisodesList a").isEmpty()
         val poster = doc.select(".SinglePoster img").attr("src")
         val title = doc.select("h1[itemprop=\"name\"]").text().cleanTitle()
-        val description = doc.select("p[itemprop=\"description\"]").text()
-        val types = doc.select("li:contains(الانواع : ) a").map { it.text().trim() }.filter { it.isNotBlank() }.toString()
-        val recommendations = doc.select("li.MovieBlock")
-            .distinctBy { it.selectFirst(".BoxTitle")?.ownText()?.cleanTitle() }
-            .mapNotNull { element -> element.toSearchResponse() }
+        val synopsis = doc.select("p[itemprop=\"description\"]").text()
+        val tags = doc.select("li:contains(الانواع : ) a").map { it.text().trim() }.filter { it.isNotBlank() }
+        val recommendations = doc.select("li.MovieBlock").distinctBy { it.selectFirst(".BoxTitle")?.ownText()?.cleanTitle() }.map { element -> element.toSearchResponse() }
 
         val episodes = ArrayList<Episode>()
         doc.select(".EpisodesList a").forEach { el ->
-            episodes.add(
-                Episode(
-                    data = el.attr("href"),
-                    name = el.text(),
-                    season = null,
-                    posterUrl = poster
-                )
-            )
+            val episodeNr = el.text()
+            episodes.add(Episode(
+                data = el.attr("href"),
+                name = episodeNr,
+                season = null,
+                episode = episodeNr.getIntFromText(),
+                posterUrl = poster
+            ))
         }
 
         val loadResponse = when {
@@ -96,40 +93,34 @@ class Cima4uProvider : MainAPI() {
         }
         return loadResponse.apply {
             this.posterUrl = poster
-            this.plot = description
-            this.rating = null
-            this.tags = null
-            this.trailers = mutableListOf<TrailerData>()
+            this.plot = synopsis
+            this.tags = tags
             this.recommendations = recommendations
-            this.actors = null
         }
     }
 
-    private fun Element.toSearchResponse(): SearchResponse? {
+    private fun Element.toSearchResponse(): SearchResponse {
         val url = select("a").attr("href")
         val title = select(".BoxTitle h3").text().cleanTitle().ifEmpty { selectFirst(".BoxTitle")?.ownText()?.cleanTitle().orEmpty() }
         val poster = selectFirst("img[data-image]")?.attr("data-image") ?: selectFirst("div[style*='background-image']")?.attr("style")?.substringAfter("url(")?.substringBefore(")")?.replace(Regex("['\"]"), "")
-        return if (url.isNotBlank() && title.isNotBlank()) {
-            MovieSearchResponse(
-                name = title.cleanTitle(),
-                url = url,
-                apiName = name,
-                type = null,
-                posterUrl = poster,
-                year = null,
-                quality = null,
-            )
-        } else {
-            null
-        }
+
+        return MovieSearchResponse(
+            name = title.cleanTitle(),
+            url = url,
+            apiName = name,
+            posterUrl = poster
+        )
     }
 
     private fun String.cleanTitle(): String {
         return this.replace("الفيلم|فيلم|مترجم|مترجمة|مسلسل|مشاهدة|حصرياًً|كامل|اونلاين|اون لاين".toRegex(), "")
             .replace("انمي|برنامج".toRegex(), "")
-            //.replace("الحلقة\\s+(\\d+)".toRegex(), "")
             .replace("الحلقة\\s+\\d+.*".toRegex(), "")
             .trim()
+    }
+
+    private fun String.getIntFromText(): Int? {
+        return Regex("""\d+""").find(this)?.groupValues?.firstOrNull()?.toIntOrNull()
     }
 
     override suspend fun loadLinks(
@@ -138,97 +129,14 @@ class Cima4uProvider : MainAPI() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ): Boolean {
-        return try {
-            val doc = app.get("$data?wat=1").document
+        val doc = app.get("$data?wat=1").document
 
-            doc.select(".serversWatchSide a").forEach { el ->
-                val iframeUrl = el.attr("data-embed")
-                val iframeName = el.text()
+        doc.select(".serversWatchSide a").forEach { el ->
+            val iframeUrl = el.attr("data-embed")
+            val iframeName = el.text()
 
-                if (iframeUrl.isNotEmpty()) {
-                    val domain = getMainDomain(iframeUrl).toString()
-
-                    val headers = mapOf(
-                        "User-Agent" to "Mozilla/5.0 (Linux; Android 4.1.1; Galaxy Nexus Build/JRO03C) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166 Mobile Safari/535.19",
-                        "Origin" to domain,
-                        "Referer" to domain
-                    )
-
-                    try {
-                        val sourceUrl = when {
-                            iframeUrl.contains("ok.ru") -> {
-                                val videoId = iframeUrl.substringAfterLast("/").substringBefore("?")
-                                val response = app.post("https://ok.ru/dk?cmd=videoPlayerMetadata&mid=$videoId", headers).parsedSafe<JSONObject>()
-                                response?.getString("hlsManifestUrl")
-                            }
-                            else -> {
-                                val html = app.get(iframeUrl, headers).document.toString()
-                                val content = JsUnpacker(html).unpack() ?: html
-
-                                extractSourceUrl(content)
-                            }
-                        }
-
-                        sourceUrl?.let { url ->
-                            callback(
-                                ExtractorLink(
-                                    source = name,
-                                    name = iframeName,
-                                    url = url,
-                                    referer = domain,
-                                    quality = Qualities.Unknown.value,
-                                    isM3u8 = url.contains("m3u8")
-                                )
-                            )
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-            }
-
-            true
-        } catch (e: Exception) {
-            e.printStackTrace()
-            false
+            handleExtractors(name, iframeName, iframeUrl, callback)
         }
-    }
-
-    private fun getMainDomain(host: String): String? {
-        return try {
-            val cleanedHost = host.replace(Regex("^(https?://|//|/)"), "").replace(Regex("/+$"), "")
-            val uri = URI("https://$cleanedHost")
-            val parts = uri.host?.split(".") ?: return null
-            when {
-                parts.size == 1 -> parts[0]
-                parts.size >= 2 -> parts.takeLast(2).joinToString(".")
-                else -> null
-            }
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private fun extractSourceUrl(content: String): String? {
-        val patterns = listOf(
-            Regex("'hls':\\s*'([^']+)'"),
-            Regex("""var sources = (\{.*?\});"""),
-            Regex("""(?:sources:\s*\[\s*\{)?file:\s*"((?:https?://|//)[^"]+)"""),
-            Regex("""sources:\s*\["([^"]+)"""),
-            Regex("""<div\s+id="robotlink"[^>]*>(.*?)</div>""", RegexOption.DOT_MATCHES_ALL),
-            Regex("""sources:\s*\[\{src:\s*"([^"]+)"""),
-            Regex("""src:\s*"([^"]+\.mp4)""")
-        )
-
-        patterns.forEach { regex ->
-            regex.find(content)?.groups?.get(1)?.value?.let { match ->
-                return when (regex) {
-                    patterns[0] -> base64Decode(match)
-                    patterns[4] -> "${match}-".replace("&amp;", "&")
-                    else -> match
-                }
-            }
-        }
-        return null
+        return true
     }
 }

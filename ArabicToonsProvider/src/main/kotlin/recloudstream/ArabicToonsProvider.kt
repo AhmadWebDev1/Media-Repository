@@ -17,7 +17,7 @@ class ArabicToonsProvider : MainAPI() {
         "$mainUrl/animetv.php" to "Live TV",
         "$mainUrl/top.php" to "Top",
         "$mainUrl/movies.php" to "Movies",
-        "$mainUrl/cartoon.php" to "Series",
+        "$mainUrl/cartoon.php" to "Series"
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
@@ -50,9 +50,7 @@ class ArabicToonsProvider : MainAPI() {
         for (url in urls) {
             val doc = app.get(url).document
             val results = doc.select(".list-group a").mapNotNull { it.toSearchResponse() }
-            if (results.isNotEmpty()) {
-                return results
-            }
+            if (results.isNotEmpty()) return results
         }
         return emptyList()
     }
@@ -67,14 +65,14 @@ class ArabicToonsProvider : MainAPI() {
         val isLive = doc.select("#live").isNotEmpty()
 
         doc.select(".moviesBlocks .movie").forEach { el ->
-            episodes.add(
-                Episode(
-                    "$mainUrl/" + el.select("a").attr("href"),
-                    el.select(".text-muted").text(),
-                    null,
-                    posterUrl = "$mainUrl/" + el.select("img").attr("src")
-                )
-            )
+            val episodeNr = el.select(".text-muted").text()
+            episodes.add(Episode(
+                data = "$mainUrl/" + el.select("a").attr("href"),
+                name = episodeNr,
+                season = null,
+                episode = episodeNr.getIntFromText(),
+                posterUrl = "$mainUrl/" + el.select("img").attr("src")
+            ))
         }
 
         val loadResponse = when {
@@ -85,11 +83,6 @@ class ArabicToonsProvider : MainAPI() {
         return loadResponse.apply {
             this.posterUrl = posterUrl
             this.plot = synopsis
-            this.rating = null
-            this.tags = null
-            this.trailers = mutableListOf<TrailerData>()
-            this.recommendations = listOf()
-            this.actors = null
         }
     }
 
@@ -97,15 +90,17 @@ class ArabicToonsProvider : MainAPI() {
         val url = "$mainUrl/" + (select("a").attr("href").takeIf { it.isNotBlank() } ?: attr("href"))
         val title = select("b").text().replace("فيلم", "").trim().takeIf { it.isNotBlank() } ?: ownText().takeIf { select("span.badge").isNotEmpty() }?.trim() ?: select("a").attr("title").trim()
         val posterUrl = "$mainUrl/" + select("img").attr("src")
+
         return MovieSearchResponse(
             name = title,
             url = url,
             apiName = name,
-            type = null,
-            posterUrl = posterUrl,
-            year = null,
-            quality = null,
+            posterUrl = posterUrl
         )
+    }
+
+    private fun String.getIntFromText(): Int? {
+        return Regex("""\d+""").find(this)?.groupValues?.firstOrNull()?.toIntOrNull()
     }
 
     override suspend fun loadLinks(
@@ -116,19 +111,15 @@ class ArabicToonsProvider : MainAPI() {
     ): Boolean {
         val doc = app.get(data).document
         val videoUrl = doc.select("#my_video_1 source").attr("src")
-        if (videoUrl.isNotBlank()) {
-            callback(
-                ExtractorLink(
-                    source = this.name,
-                    name = this.name,
-                    url = videoUrl,
-                    referer = this.mainUrl,
-                    quality = Qualities.Unknown.value,
-                    isM3u8 = true
-                )
-            )
-            return true
-        }
-        return false
+
+        callback(ExtractorLink(
+            source = name,
+            name = name,
+            url = videoUrl,
+            referer = this.mainUrl,
+            quality = Qualities.Unknown.value,
+            isM3u8 = true
+        ))
+        return true
     }
 }

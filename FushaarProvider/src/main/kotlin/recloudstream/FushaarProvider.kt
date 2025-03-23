@@ -2,11 +2,8 @@ package recloudstream
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.JsUnpacker
 import com.lagradost.cloudstream3.utils.Qualities
-import org.json.JSONObject
 import org.jsoup.nodes.Element
-import java.net.URI
 
 class FushaarProvider : MainAPI() {
     override var lang = "ar"
@@ -26,8 +23,8 @@ class FushaarProvider : MainAPI() {
         "$mainUrl/gerne/crime/" to "Crime | جريمة",
         "$mainUrl/gerne/documentary/" to "Documentary | وثائقي",
         "$mainUrl/gerne/drama/" to "Drama | دراما",
-        "$mainUrl/gerne/family/"	to "Family | عائلي",
-        "$mainUrl/gerne/fantasy/"	to "Fantasy | فنتازيا",
+        "$mainUrl/gerne/family/" to "Family | عائلي",
+        "$mainUrl/gerne/fantasy/" to "Fantasy | فنتازيا",
         "$mainUrl/gerne/herror/" to "Herror | رعب",
         "$mainUrl/gerne/history/" to "History |تاريخي",
         "$mainUrl/gerne/music/" to "Music | موسيقى",
@@ -39,7 +36,7 @@ class FushaarProvider : MainAPI() {
         "$mainUrl/gerne/sport/" to "Sport | رياضة",
         "$mainUrl/gerne/thriller/" to "Thriller | إثارة",
         "$mainUrl/gerne/war/" to "War | حرب",
-        "$mainUrl/gerne/western/" to "Western | غربي",
+        "$mainUrl/gerne/western/" to "Western | غربي"
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
@@ -61,37 +58,31 @@ class FushaarProvider : MainAPI() {
         val doc = app.get(url).document
         val poster = doc.select("figure.poster img").attr("data-lazy-src")
         val title = doc.select("#single h1>span").text().cleanTitle()
-        val description = doc.select(".postinfo .postz").text()
+        val synopsis = doc.select(".postinfo .postz").text()
+        val rating = doc.select(".z-imdb .imdb").text().toInt()
+        val tags = doc.select(".gerne a").map { it.text() }
         val recommendations = doc.select(".postercontainer .poster").mapNotNull { element -> element.toSearchResponse() }
 
         return newMovieLoadResponse(title, url, TvType.Movie, url) {
             this.posterUrl = poster
-            this.plot = description
-            this.rating = null
-            this.tags = null
-            this.trailers = mutableListOf<TrailerData>()
+            this.plot = synopsis
+            this.rating = rating
+            this.tags = tags
             this.recommendations = recommendations
-            this.actors = null
         }
     }
 
-    private fun Element.toSearchResponse(): SearchResponse? {
+    private fun Element.toSearchResponse(): SearchResponse {
         val url = select("a").attr("href")
         val title = select(".info h3").text().cleanTitle()
         val poster = select("img[data-lazy-src]").attr("data-lazy-src")
-        return if (url.isNotBlank() && title.isNotBlank()) {
-            MovieSearchResponse(
-                name = title.cleanTitle(),
-                url = url,
-                apiName = name,
-                type = null,
-                posterUrl = poster,
-                year = null,
-                quality = null,
-            )
-        } else {
-            null
-        }
+
+        return MovieSearchResponse(
+            name = title.cleanTitle(),
+            url = url,
+            apiName = name,
+            posterUrl = poster
+        )
     }
 
     private fun String.cleanTitle(): String {
@@ -110,20 +101,17 @@ class FushaarProvider : MainAPI() {
             val quality = Regex("جوده\\s+(\\d+)").find(el.text())?.groupValues?.get(1)?.toIntOrNull()
 
             el.attr("href").let { url ->
-                callback(
-                    ExtractorLink(
-                        source = name,
-                        name = name,
-                        url = url,
-                        referer = mainUrl,
-                        quality = quality ?: Qualities.Unknown.value,
-                        isM3u8 = url.contains("m3u8")
-                    )
-                )
+                callback(ExtractorLink(
+                    source = name,
+                    name = name,
+                    url = url,
+                    referer = mainUrl,
+                    quality = quality ?: Qualities.Unknown.value,
+                    isM3u8 = url.contains("m3u8")
+                ))
             }
 
         }
-
         return true
     }
 }

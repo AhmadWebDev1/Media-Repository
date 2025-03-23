@@ -1,10 +1,5 @@
 rootProject.name = "CloudstreamPlugins"
 
-File(rootDir, "lib").eachDir {
-    include("lib:${it.name}")
-    project(":lib:${it.name}").projectDir = it
-}
-
 // This file sets what projects are included.
 // All new projects should get automatically included unless specified in the "disabled" variable.
 

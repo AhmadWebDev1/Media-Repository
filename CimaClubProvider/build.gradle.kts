@@ -1,7 +1,4 @@
 version = 1
-dependencies {
-    implementation("com.google.firebase:firebase-crashlytics-buildtools:3.0.3")
-}
 
 cloudstream {
     description = ""
