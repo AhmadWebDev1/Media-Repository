@@ -101,21 +101,6 @@
         "name": "LodynetProvider"
     },
     {
-        "iconUrl": "https://www.google.com/s2/favicons?sz=%size%&domain=movie4u.watch",
-        "apiVersion": 1,
-        "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
-        "fileSize": 14398,
-        "status": 1,
-        "language": "ar",
-        "authors": ["Ahmad"],
-        "tvTypes": ["TvSeries", "Movie", "Anime"],
-        "version": 1,
-        "internalName": "Movs4uProvider",
-        "description": "Some features of the Provider may not work or crash due to Cloudflare",
-        "url": "https://github.com/AhmadWebDev1/Media-Repository/raw/Cloudstream-repo/Movs4uProvider.cs3",
-        "name": "Movs4uProvider"
-    },
-    {
         "iconUrl": "https://www.google.com/s2/favicons?sz=%size%&domain=muvtime6.shop",
         "apiVersion": 1,
         "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
@@ -129,6 +114,21 @@
         "description": "Some features of the Provider may not work or crash due to Cloudflare",
         "url": "https://github.com/AhmadWebDev1/Media-Repository/raw/Cloudstream-repo/MovizTimeProvider.cs3",
         "name": "MovizTimeProvider"
+    },
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?sz=%size%&domain=movie4u.watch",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/AhmadWebDev1/Media-Repository/tree/Cloudstream",
+        "fileSize": 14403,
+        "status": 1,
+        "language": "ar",
+        "authors": ["Ahmad"],
+        "tvTypes": ["TvSeries", "Movie", "Anime"],
+        "version": 1,
+        "internalName": "Movs4uProvider",
+        "description": "Some features of the Provider may not work or crash due to Cloudflare",
+        "url": "https://github.com/AhmadWebDev1/Media-Repository/raw/Cloudstream-repo/Movs4uProvider.cs3",
+        "name": "Movs4uProvider"
     },
     {
         "iconUrl": "https://www.google.com/s2/favicons?sz=%size%&domain=wecima.watch",
