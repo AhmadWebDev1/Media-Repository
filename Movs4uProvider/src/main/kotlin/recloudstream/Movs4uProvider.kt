@@ -8,7 +8,7 @@ import org.jsoup.nodes.Element
 class Movs4uProvider : MainAPI() {
     override var lang = "ar"
     override var mainUrl = "https://movie4u.watch"
-    override var name = "Movie4u"
+    override var name = "Movs4u"
     override val usesWebView = false
     override val hasMainPage = true
     private val interceptor = CloudflareKiller()
