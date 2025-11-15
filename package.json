@@ -1,18 +1,14 @@
 {
 	"name": "stremio-addon-akwam",
-	"version": "0.0.1",
+	"version": "1.0.0",
+	"main": "server.js",
 	"scripts": {
 		"start": "node server.js"
 	},
 	"dependencies": {
-		"axios": "^1.13.2",
-		"cheerio": "^1.1.2",
+		"stremio-addon-sdk": "^1.5.0",
+		"axios": "^1.6.7",
 		"express": "^5.1.0",
-		"stremio-addon-sdk": "1.1.x"
-	},
-	"main": "addon.js",
-	"keywords": [],
-	"author": "",
-	"license": "ISC",
-	"description": ""
+		"cheerio": "^1.0.0"
+	}
 }
