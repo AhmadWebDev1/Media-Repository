@@ -1,5 +1,5 @@
 const { addonBuilder } = require("stremio-addon-sdk");
-const axios = require("axios");
+const cloudscraper = require("cloudscraper");
 const cheerio = require("cheerio");
 
 const mainUrl = "https://ak.sv";
@@ -8,7 +8,7 @@ const manifest = {
     id: "org.akwam.stremio",
     version: "1.0.0",
     name: "Akwam",
-    description: "Akwam streaming addon",
+    description: "Akwam streaming addon with Cloudflare bypass",
     types: ["movie", "series"],
     catalogs: [
         { type: "movie", id: "akwam_movies", name: "Akwam Movies", extra: [{ name: "search" }] },
@@ -19,10 +19,14 @@ const manifest = {
 
 const builder = new addonBuilder(manifest);
 
-// --------------------------- Helpers ---------------------------
+// --------------------------- Helper: Cloudflare Bypass ---------------------------
 async function fetchHTML(url) {
-    const res = await axios.get(url, { headers: { "User-Agent": "Mozilla/5.0" } });
-    return cheerio.load(res.data);
+    const html = await cloudscraper.get(url, {
+        headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        }
+    });
+    return cheerio.load(html);
 }
 
 function cleanTitle(t) {
@@ -40,7 +44,10 @@ builder.defineCatalogHandler(async (args) => {
 
     if (args.id === "akwam_movies") url = `${mainUrl}/movies`;
     if (args.id === "akwam_series") url = `${mainUrl}/series`;
-    if (args.extra && args.extra.search) url = `${mainUrl}/search?q=${args.extra.search.replace(" ", "+")}`;
+
+    if (args.extra && args.extra.search) {
+        url = `${mainUrl}/search?q=${args.extra.search.replace(/ /g, "+")}`;
+    }
 
     const $ = await fetchHTML(url);
     const items = [];
@@ -73,6 +80,7 @@ builder.defineMetaHandler(async (args) => {
     const poster = $("picture img").attr("src");
     const plot = $(".text-white p").text();
     const isMovie = $(".qualities").length > 0;
+
     let episodes = [];
 
     if (!isMovie) {
@@ -105,9 +113,10 @@ builder.defineMetaHandler(async (args) => {
 // --------------------------- Stream ---------------------------
 builder.defineStreamHandler(async (args) => {
     const id = args.id;
-    const $page = await fetchHTML(id);
 
+    const $page = await fetchHTML(id);
     const linkShow = $page(".link-show").attr("href");
+
     const watchID = /\/watch\/(\d+)/.exec(linkShow)?.[1];
     const baseID = /\/(?:movie|series|episode)\/(\d+)\//.exec(id)?.[1];
 
@@ -118,7 +127,7 @@ builder.defineStreamHandler(async (args) => {
 
     $("video source").each((i, el) => {
         const url = $(el).attr("src");
-        const size = $(el).attr("size");
+        const size = $(el).attr("size") || "Auto";
 
         streams.push({
             title: `Akwam ${size}`,
